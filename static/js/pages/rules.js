@@ -90,3 +90,9 @@ export function verifyExplainer(row) {
   if (row["是否对齐"]) return "缓冲已物化事件数与切片账事件数一致，窗账闭合。";
   return row["说明"] || "缓冲与切片撕裂，需回查关窗批次。";
 }
+
+/** 窗规策略卡片：只读水位接口（旧窗号、新窗号、归档键、valid）。 */
+export function summarize水位(水位) {
+  if (!水位 || !水位.valid) return "水位未推进：窗规仍指向初始窗";
+  return `旧窗号 ${水位.旧窗号} → 新窗号 ${水位.新窗号} · 归档键 ${水位.归档键} · valid=${水位.valid}`;
+}

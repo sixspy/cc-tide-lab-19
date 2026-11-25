@@ -8,11 +8,31 @@ os.environ["数据目录"] = _tmp
 os.environ["夹具目录"] = str(Path(__file__).resolve().parents[2] / "fixtures")
 
 from app import seed
+from app import db as _db
 from app.services import 装载, 关窗, 贯验, 目录, 时间, 校验, 夹具
+
+_库 = Path(_tmp) / "主链.db"
+_db.库路径 = _库
 
 
 @pytest.fixture(autouse=True)
-def _db():
+def _重置库():
+    # 每用例独立建库：关窗会封印并推进窗规，残留状态会让后续用例的窗内事件变成迟到。
+    # WAL 连接可能令文件 unlink 不彻底，因此先强制 checkpoint，再 drop 全部业务表后重建。
+    _db.库路径 = _库
+    seed.初始化库()
+    conn = _db.连接()
+    try:
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        for 表 in [
+            r["name"] for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+            )
+        ]:
+            conn.execute(f"DROP TABLE IF EXISTS {表}")
+        conn.commit()
+    finally:
+        conn.close()
     seed.初始化库()
     yield
 

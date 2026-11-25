@@ -90,3 +90,9 @@ export function verifyExplainer(row) {
   if (row["是否对齐"]) return "缓冲已物化事件数与切片账事件数一致，窗账闭合。";
   return row["说明"] || "缓冲与切片撕裂，需回查关窗批次。";
 }
+
+/** 水位推进卡片：关窗回执里的封印段，旧窗号→新窗号必须可区分。 */
+export function summarize推进(推进) {
+  if (!推进 || !推进.valid) return "尚无封印：关窗后这里显示旧窗号→新窗号与归档键";
+  return `封印 ${推进.旧窗号} → 现行 ${推进.新窗号} · 归档键 ${推进.归档键} · valid`;
+}

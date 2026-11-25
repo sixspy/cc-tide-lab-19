@@ -44,24 +44,40 @@
 
       <section class="卷">
         <div class="工具"><button class="按钮 青" id="关">关当前窗</button></div>
-        <div class="表绕"><table><thead><tr><th>切片编号</th><th>窗号</th><th>运单键</th><th>事件数</th><th>物化时</th></tr></thead><tbody id="表"></tbody></table></div>
+        <p class="说明" id="封印">加载中…</p>
+        <div class="表绕"><table><thead><tr><th>切片编号</th><th>窗号</th><th>运单键</th><th>事件数</th><th>窗起→止</th><th>物化时</th></tr></thead><tbody id="表"></tbody></table></div>
       </section>
       <section class="卷">
         <div class="双栏">
-          <p class="说明">切片按运单聚合事件数。邻题空桩可改半截回滚/封印写闸，基线只做整窗物化。</p>
+          <p class="说明">切片按运单聚合事件数，钉在关窗时的旧窗号；旧窗封印后进只读归档，后续装载改读推进后的新窗，切片窗号不撞车。</p>
           <div class="侧注">去皮：关窗管道。勿抄对拍左右轨命名。</div>
         </div>
       </section>
+      <pre class="回执" id="回执" style="margin:0 0 16px"></pre>
       <script>
       async function 刷() {
-        const rows = await 潮切.getJSON("/api/窗切片账");
+        const [rows, 水位] = await Promise.all([
+          潮切.getJSON("/api/窗切片账"),
+          潮切.getJSON("/api/窗水位推进"),
+        ]);
+        document.getElementById("封印").innerHTML = 水位.valid
+          ? `最近封印：旧窗 ${潮切.安全文本(水位.旧窗号)} → 新窗 ${潮切.安全文本(水位.新窗号)}（归档键 ${潮切.安全文本(水位.归档键)}，只读）`
+          : 潮切.空态("尚无封印。关窗后切片所属窗将封印为只读归档。");
         const tb = document.getElementById("表"); tb.innerHTML = "";
-        if (!rows.length) { tb.innerHTML = `<tr><td colspan="5">${潮切.空态("尚无切片。装载窗内事件后点关当前窗。")}</td></tr>`; return; }
+        if (!rows.length) { tb.innerHTML = `<tr><td colspan="6">${潮切.空态("尚无切片。装载窗内事件后点关当前窗。")}</td></tr>`; return; }
         for (const r of rows) {
-          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.切片编号)}</td><td>${潮切.安全文本(r.窗号)}</td><td>${潮切.安全文本(r.运单键)}</td><td>${r.事件数}</td><td>${潮切.安全文本(r.物化时)}</td>`));
+          const 封 = 水位.valid && r.窗号 === 水位.旧窗号 ? 潮切.徽章("已封印", "好") : "";
+          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.切片编号)}</td><td>${潮切.安全文本(r.窗号)} ${封}</td><td>${潮切.安全文本(r.运单键)}</td><td>${r.事件数}</td><td>${潮切.安全文本(r.窗起)} → ${潮切.安全文本(r.窗止)}</td><td>${潮切.安全文本(r.物化时)}</td>`));
         }
       }
-      document.getElementById("关").onclick = async () => { await 潮切.postJSON("/api/关窗/跑"); await 刷(); };
+      document.getElementById("关").onclick = async () => {
+        const el = document.getElementById("回执");
+        try {
+          const 回 = await 潮切.postJSON("/api/关窗/跑");
+          el.textContent = JSON.stringify(回.水位推进 || 回, null, 2);
+        } catch (e) { el.textContent = String(e); }
+        await 刷();
+      };
       刷();
       </script>
 

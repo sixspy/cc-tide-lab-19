@@ -74,20 +74,28 @@
           <button class="按钮 青" id="关窗">关当前窗</button>
           <button class="按钮 次" id="贯验">跑窗贯验</button>
         </div>
+        <p class="说明" id="水位卡">水位推进：关窗成功后旧窗封印进只读账册，现行窗规推进到下一窗起止，下一趟装载读新窗。</p>
         <pre class="回执" id="回执">操作回执会显示在这里</pre>
       </section>
       <script>
+      function 渲染水位推进(推进) {
+        const el = document.getElementById("水位卡");
+        if (!推进 || !推进.valid) { el.textContent = "尚无封印。关窗后这里会显示旧窗号→新窗号与归档键。"; return; }
+        el.innerHTML = `旧窗 ${潮切.安全文本(推进.旧窗号)} 已封印 → 现行新窗 ${潮切.安全文本(推进.新窗号)}　归档键 ${潮切.安全文本(推进.归档键)} ` + 潮切.徽章("valid", "好");
+      }
       async function 刷新() {
         const o = await 潮切.getJSON("/api/概览");
         const r = o.窗规 || {};
         document.getElementById("尺起").textContent = (r["窗起"] || "窗起").slice(11, 16) || "窗起";
         document.getElementById("尺止").textContent = (r["窗止"] || "窗止").slice(11, 16) || "窗止";
         潮切.渲染水位(document.getElementById("水位"), o);
+        渲染水位推进(await 潮切.getJSON("/api/窗水位推进"));
       }
       async function 跑(fn) {
         const el = document.getElementById("回执");
         try {
-          el.textContent = JSON.stringify(await fn(), null, 2);
+          const 回 = await fn();
+          el.textContent = JSON.stringify(回, null, 2);
           await 刷新();
         } catch (e) { el.textContent = String(e); }
       }

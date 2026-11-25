@@ -74,6 +74,16 @@ def 贯验列表() -> list[dict]:
         conn.close()
 
 
+def 水位账列表() -> list[dict]:
+    conn = 连接()
+    try:
+        return [dict(r) for r in conn.execute(
+            "SELECT * FROM 窗水位账 ORDER BY 编号 DESC LIMIT 100"
+        ).fetchall()]
+    finally:
+        conn.close()
+
+
 def 概览() -> dict:
     conn = 连接()
     try:

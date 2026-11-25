@@ -90,3 +90,9 @@ export function verifyExplainer(row) {
   if (row["是否对齐"]) return "缓冲已物化事件数与切片账事件数一致，窗账闭合。";
   return row["说明"] || "缓冲与切片撕裂，需回查关窗批次。";
 }
+
+/** 窗切片账列表：切片钉在关窗时旧窗号；旧窗封印后只读，与新窗装载读引用不同。 */
+export function sliceSealState(行, 水位) {
+  if (水位 && 水位.valid && 行["窗号"] === 水位.旧窗号) return "已封印-只读归档";
+  return "现行窗切片";
+}

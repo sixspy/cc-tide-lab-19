@@ -47,6 +47,12 @@
         <pre class="回执" id="规">加载中…</pre>
       </section>
       <section class="卷">
+        <h2>水位推进（只读）</h2>
+        <p class="说明" id="水位">加载中…</p>
+        <div class="表绕"><table><thead><tr><th>归档键</th><th>旧窗号</th><th>旧窗止</th><th>新窗号</th><th>新窗起→止</th><th>valid</th><th>封印时</th></tr></thead><tbody id="封印表"></tbody></table></div>
+        <p class="说明">关窗同票完成物化与改窗规：旧窗规进只读归档，现行窗规改读推进后窗；两轨读引用不同，切片窗号不撞车。</p>
+      </section>
+      <section class="卷">
         <h2>空桩目录</h2>
         <p class="说明" id="空桩"></p>
         <div class="双栏">
@@ -59,6 +65,18 @@
         document.getElementById("规").textContent = JSON.stringify(await 潮切.getJSON("/api/窗规"), null, 2);
         const s = await 潮切.getJSON("/api/空桩");
         document.getElementById("空桩").textContent = "空桩 " + s.条数 + "：" + (s.空桩 || []).join(" · ");
+
+        const 水位 = await 潮切.getJSON("/api/窗水位推进");
+        document.getElementById("水位").innerHTML = 水位.valid
+          ? `旧窗 ${潮切.安全文本(水位.旧窗号)} 已封印 → 现行新窗 ${潮切.安全文本(水位.新窗号)}　归档键 ${潮切.安全文本(水位.归档键)} ` + 潮切.徽章("valid", "好")
+          : 潮切.空态("尚无封印：尚未关窗或水位未推进。");
+
+        const 封印 = await 潮切.getJSON("/api/窗水位账");
+        const tb = document.getElementById("封印表");
+        if (!封印.length) { tb.innerHTML = `<tr><td colspan="7">${潮切.空态("尚无封印记录。")}</td></tr>`; return; }
+        for (const r of 封印) {
+          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.归档键)}</td><td>${潮切.安全文本(r.旧窗号)}</td><td>${潮切.安全文本(r.旧窗止)}</td><td>${潮切.安全文本(r.新窗号)}</td><td>${潮切.安全文本(r.新窗起)} → ${潮切.安全文本(r.新窗止)}</td><td>${r.valid ? 潮切.徽章("valid","好") : 潮切.徽章("失效","危")}</td><td>${潮切.安全文本(r.时刻)}</td>`));
+        }
       })();
       </script>
 

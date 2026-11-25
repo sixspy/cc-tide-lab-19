@@ -3,6 +3,7 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 from pathlib import Path
 from app.services import 目录, 装载, 关窗, 贯验, 夹具, 统计, 说明
+from app.modules import 窗水位推进
 
 
 async def api_概览(request: Request):
@@ -64,7 +65,23 @@ async def api_夹具装载(request: Request):
 
 
 async def api_关窗(request: Request):
-    return JSONResponse(关窗.关当前窗())
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    意图 = (body or {}).get("意图窗号")
+    try:
+        return JSONResponse(关窗.关当前窗(意图))
+    except 关窗.窗已封 as e:
+        return JSONResponse({"错误": str(e)}, status_code=409)
+
+
+async def api_窗水位(request: Request):
+    return JSONResponse(窗水位推进.水位只读())
+
+
+async def api_水位账(request: Request):
+    return JSONResponse(目录.水位账列表())
 
 
 async def api_贯验(request: Request):
@@ -104,6 +121,8 @@ async def api_空桩(request: Request):
     Route("/api/观测点/装载", api_装载, methods=["POST"]),
     Route("/api/观测点/夹具/{name}", api_夹具装载, methods=["POST"]),
     Route("/api/关窗/跑", api_关窗, methods=["POST"]),
+    Route("/api/窗水位推进", api_窗水位, methods=["GET"]),
+    Route("/api/窗水位账", api_水位账, methods=["GET"]),
     Route("/api/窗贯验/跑", api_贯验, methods=["POST"]),
     Route("/api/统计/观测命运", api_统计观测),
     Route("/api/统计/缓冲命运", api_统计缓冲),

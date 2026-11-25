@@ -43,16 +43,29 @@
       </header>
 
       <section class="卷">
+        <h2>现行窗与封印对照</h2>
+        <p class="说明" id="对照">加载中…</p>
         <div class="表绕"><table><thead><tr><th>事件编号</th><th>运单键</th><th>窗号</th><th>事件时</th><th>命运</th></tr></thead><tbody id="表"></tbody></table></div>
       </section>
-      <section class="卷"><div class="双栏"><p class="说明">缓冲是关窗前的在途。关窗后命运应变为已物化，条数应下降。</p><div class="侧注">版式：左侧窗时间轴。对拍是顶栏双轨，肉眼应能分开。</div></div></section>
+      <section class="卷"><div class="双栏"><p class="说明">缓冲是关窗前的在途。关窗后命运应变为已物化，条数应下降；封印窗下不得残留「在缓冲」，装载一律读推进后的新窗。</p><div class="侧注">版式：左侧窗时间轴。对拍是顶栏双轨，肉眼应能分开。</div></div></section>
       <script>
       (async () => {
-        const rows = await 潮切.getJSON("/api/入窗缓冲");
+        const [rows, 规, 水位] = await Promise.all([
+          潮切.getJSON("/api/入窗缓冲"),
+          潮切.getJSON("/api/窗规"),
+          潮切.getJSON("/api/窗水位推进"),
+        ]);
+        const 对 = document.getElementById("对照");
+        const 现行 = `现行窗 ${潮切.安全文本(规["当前窗号"])}（${潮切.安全文本(规["窗起"])} → ${潮切.安全文本(规["窗止"])}）`;
+        对.innerHTML = 水位.valid
+          ? `${现行}　｜　最近封印旧窗 ${潮切.安全文本(水位.旧窗号)} → 新窗 ${潮切.安全文本(水位.新窗号)}，两轨读引用不同`
+          : 现行 + "　｜　尚无封印";
         const tb = document.getElementById("表");
         if (!rows.length) { tb.innerHTML = `<tr><td colspan="5">${潮切.空态("缓冲为空。要么尚未装载，要么已经关窗物化。")}</td></tr>`; return; }
+        const 已封 = new Set((await 潮切.getJSON("/api/窗水位账")).filter(r => r.valid).map(r => r.旧窗号));
         for (const r of rows) {
-          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.事件编号)}</td><td>${潮切.安全文本(r.运单键)}</td><td>${潮切.安全文本(r.窗号)}</td><td>${潮切.安全文本(r.事件时)}</td><td>${潮切.徽章(r.命运)}</td>`));
+          const 封 = 已封.has(r.窗号) ? 潮切.徽章("封印窗", "警") : "";
+          tb.appendChild(潮切.行(`<td>${潮切.安全文本(r.事件编号)}</td><td>${潮切.安全文本(r.运单键)}</td><td>${潮切.安全文本(r.窗号)} ${封}</td><td>${潮切.安全文本(r.事件时)}</td><td>${潮切.徽章(r.命运)}</td>`));
         }
       })();
       </script>

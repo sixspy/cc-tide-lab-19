@@ -90,3 +90,8 @@ export function verifyExplainer(row) {
   if (row["是否对齐"]) return "缓冲已物化事件数与切片账事件数一致，窗账闭合。";
   return row["说明"] || "缓冲与切片撕裂，需回查关窗批次。";
 }
+
+/** 入窗缓冲详情：封印窗下不得残留「在缓冲」，装载一律读推进后的新窗。 */
+export function bufferWindowState(行, 已封窗号集合) {
+  return (已封窗号集合 || []).includes(行["窗号"]) ? "封印窗" : "现行窗";
+}
